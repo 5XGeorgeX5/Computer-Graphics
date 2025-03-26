@@ -7,28 +7,43 @@
 
 using namespace std;
 
-void DrawLine(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color)
+int Round(double x)
 {
-    int dx = abs(x2 - x1), dy = abs(y2 - y1);
-    int sx = (x1 < x2) ? 1 : -1;
-    int sy = (y1 < y2) ? 1 : -1;
-    int err = dx - dy;
-
-    while (true)
+    return (int)(x + 0.5);
+}
+void DrawLineDDA(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color)
+{
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    SetPixel(hdc, x1, y1, color);
+    if (abs(dx) >= abs(dy))
     {
-        SetPixel(hdc, x1, y1, color);
-        if (x1 == x2 && y1 == y2)
-            break;
-        int e2 = 2 * err;
-        if (e2 > -dy)
+        double m = (double)dy / dx;
+        if (x1 > x2)
         {
-            err -= dy;
-            x1 += sx;
+            swap(x1, x2);
+            swap(y1, y2);
         }
-        if (e2 < dx)
+        double y = y1;
+        for (int x = x1; x <= x2; x++)
         {
-            err += dx;
-            y1 += sy;
+            y += m;
+            SetPixel(hdc, x, Round(y), color);
+        }
+    }
+    else
+    {
+        double mi = (double)dx / dy;
+        if (y1 > y2)
+        {
+            swap(x1, x2);
+            swap(y1, y2);
+        }
+        double x = x1;
+        for (int y = y1; y <= y2; y++)
+        {
+            x += mi;
+            SetPixel(hdc, Round(x), y, color);
         }
     }
 }
@@ -39,8 +54,8 @@ void DrawStar(HDC hdc, COLORREF colors[5], pair<int, int> points[5])
     {
         int skip = (i + 2) % 5;
 
-        DrawLine(hdc, points[i].first, points[i].second,
-                 points[skip].first, points[skip].second, colors[i]);
+        DrawLineDDA(hdc, points[i].first, points[i].second,
+                    points[skip].first, points[skip].second, colors[i]);
     }
 }
 
