@@ -1,0 +1,119 @@
+//////////////////////////////
+// George Raafat - 20220097 //
+//////////////////////////////
+
+#define UNICODE
+#define _UNICODE
+#include <Windows.h>
+#include <cmath>
+#include <iostream>
+#include <functional>
+using namespace std;
+
+int Round(double x)
+{
+    return (int)(x + 0.5);
+}
+
+size_t hashPoint(int x, int y)
+{
+    std::hash<std::string> hasher;
+    return hasher(std::to_string(x) + std::to_string(y));
+}
+
+COLORREF HashToColor(int x, int y)
+{
+    size_t hash = hashPoint(x, y);
+
+    BYTE r = (hash >> 16) & 0xFF;
+    BYTE g = (hash >> 8) & 0xFF;
+    BYTE b = hash & 0xFF;
+
+    return RGB(r, g, b);
+}
+
+void InterpolatedColoredLine(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c1, COLORREF c2)
+{
+    int red1 = GetRValue(c1);
+    int green1 = GetGValue(c1);
+    int blue1 = GetBValue(c1);
+    int alphaRed = GetRValue(c2) - red1;
+    int alphaGreen = GetGValue(c2) - green1;
+    int alphaBlue = GetBValue(c2) - blue1;
+    int alphaX = x2 - x1;
+    int alphaY = y2 - y1;
+    double step = 1.0 / std::max(abs(alphaX), abs(alphaY));
+    for (double t = 0; t <= 1; t += step)
+    {
+        int red = red1 + Round(t * alphaRed);
+        int green = green1 + Round(t * alphaGreen);
+        int blue = blue1 + Round(t * alphaBlue);
+        int x = x1 + Round(t * alphaX);
+        int y = y1 + Round(t * alphaY);
+        SetPixel(hdc, x, y, RGB(red, green, blue));
+    }
+}
+
+LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
+{
+    static int x1, y1;
+    HDC hdc;
+    switch (m)
+    {
+    case WM_LBUTTONDOWN:
+        x1 = LOWORD(lp);
+        y1 = HIWORD(lp);
+        break;
+    case WM_LBUTTONUP:
+    {
+        int x2 = LOWORD(lp);
+        int y2 = HIWORD(lp);
+
+        hdc = GetDC(hwnd);
+        InterpolatedColoredLine(hdc, x1, y1, x2, y2, HashToColor(x1, y1), HashToColor(x2, y2));
+        ReleaseDC(hwnd, hdc);
+        break;
+    }
+    case WM_RBUTTONDOWN:
+    {
+        InvalidateRect(hwnd, NULL, TRUE);
+        UpdateWindow(hwnd);
+        break;
+    }
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    default:
+        return DefWindowProc(hwnd, m, wp, lp);
+    }
+    return 0;
+}
+
+int APIENTRY WinMain(HINSTANCE hi, HINSTANCE pi, LPSTR cmd, int nsh)
+{
+    WNDCLASS wc;
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
+    wc.lpszClassName = L"MyClass";
+    wc.lpszMenuName = NULL;
+    wc.lpfnWndProc = WndProc;
+    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.hInstance = hi;
+    RegisterClass(&wc);
+    HWND hwnd = CreateWindow(L"MyClass", L"Hello World!", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hi, 0);
+    ShowWindow(hwnd, nsh);
+    UpdateWindow(hwnd);
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0) > 0)
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+    return 0;
+}
