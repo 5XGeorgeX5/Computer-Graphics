@@ -90,17 +90,17 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c)
     int y = y1;
     SetPixel(hdc, x, y, c);
     SetPixel(hdc, x2, y2, c);
+    if ((abs(slope) > 1 && dy < 0) || (abs(slope) <= 1 && dx < 0))
+    {
+        swap(x1, x2);
+        swap(y1, y2);
+        dx = x2 - x1;
+        dy = y2 - y1;
+        x = x1;
+        y = y1;
+    }
     if (0 <= slope && slope <= 1)
     {
-        if (x1 > x2)
-        {
-            swap(x1, x2);
-            swap(y1, y2);
-            dx = x2 - x1;
-            dy = y2 - y1;
-            x = x1;
-            y = y1;
-        }
         int d = dx - 2 * dy;
         int change1 = -2 * dy;
         int change2 = 2 * (dx - dy);
@@ -121,15 +121,6 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c)
     }
     else if (slope > 1)
     {
-        if (y1 > y2)
-        {
-            swap(x1, x2);
-            swap(y1, y2);
-            dx = x2 - x1;
-            dy = y2 - y1;
-            x = x1;
-            y = y1;
-        }
         int d = 2 * dx - dy;
         int change1 = 2 * dx;
         int change2 = 2 * (dx - dy);
@@ -150,15 +141,6 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c)
     }
     else if (slope >= -1)
     {
-        if (x1 > x2)
-        {
-            swap(x1, x2);
-            swap(y1, y2);
-            dx = x2 - x1;
-            dy = y2 - y1;
-            x = x1;
-            y = y1;
-        }
         int d = -(dx + 2 * dy);
         int change1 = -2 * dy;
         int change2 = -2 * (dx + dy);
@@ -179,15 +161,6 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c)
     }
     else
     {
-        if (y1 > y2)
-        {
-            swap(x1, x2);
-            swap(y1, y2);
-            dx = x2 - x1;
-            dy = y2 - y1;
-            x = x1;
-            y = y1;
-        }
         int d = 2 * dx + dy;
         int change1 = 2 * dx;
         int change2 = 2 * (dx + dy);
