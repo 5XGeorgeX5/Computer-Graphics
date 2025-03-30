@@ -21,39 +21,28 @@ int Round(double x)
     return (int)(x + 0.5);
 }
 
-void DrawLineDDA(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color)
+void DrawLine(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color)
 {
-    int dx = x2 - x1;
-    int dy = y2 - y1;
-    SetPixel(hdc, x1, y1, color);
-    if (abs(dx) >= abs(dy))
+    int dx = abs(x2 - x1), dy = abs(y2 - y1);
+    int sx = (x1 < x2) ? 1 : -1;
+    int sy = (y1 < y2) ? 1 : -1;
+    int err = dx - dy;
+
+    while (true)
     {
-        double m = (double)dy / dx;
-        if (x1 > x2)
+        SetPixel(hdc, x1, y1, color);
+        if (x1 == x2 && y1 == y2)
+            break;
+        int e2 = 2 * err;
+        if (e2 > -dy)
         {
-            swap(x1, x2);
-            swap(y1, y2);
+            err -= dy;
+            x1 += sx;
         }
-        double y = y1;
-        for (int x = x1; x <= x2; x++)
+        if (e2 < dx)
         {
-            y += m;
-            SetPixel(hdc, x, Round(y), color);
-        }
-    }
-    else
-    {
-        double mi = (double)dx / dy;
-        if (y1 > y2)
-        {
-            swap(x1, x2);
-            swap(y1, y2);
-        }
-        double x = x1;
-        for (int y = y1; y <= y2; y++)
-        {
-            x += mi;
-            SetPixel(hdc, Round(x), y, color);
+            err += dx;
+            y1 += sy;
         }
     }
 }
@@ -166,7 +155,7 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         if (counter != 0)
         {
             hdc = GetDC(hwnd);
-            DrawLineDDA(hdc, points[counter - 1].x, points[counter - 1].y, points[counter].x, points[counter].y, RGB(0, 0, 0));
+            DrawLine(hdc, points[counter - 1].x, points[counter - 1].y, points[counter].x, points[counter].y, RGB(0, 0, 0));
             ReleaseDC(hwnd, hdc);
         }
         ++counter;
