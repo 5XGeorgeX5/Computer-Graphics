@@ -10,14 +10,10 @@
 #include <functional>
 using namespace std;
 
-struct DoublePoint
-{
-    double x, y;
-};
-
+template <typename T>
 struct Point
 {
-    int x, y;
+    T x, y;
 };
 
 int Round(double x)
@@ -62,14 +58,14 @@ void DrawLineDDA(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color)
     }
 }
 
-DoublePoint LinearInterpolation(DoublePoint p1, DoublePoint p2)
+Point<double> LinearInterpolation(Point<double> p1, Point<double> p2)
 {
     return {p1.x + (p2.x - p1.x) * 0.5, p1.y + (p2.y - p1.y) * 0.5};
 }
 
-DoublePoint BezierInterpolation(DoublePoint points[], int n)
+Point<double> BezierInterpolation(Point<double> points[], int n)
 {
-    DoublePoint copyPoints[n + 1];
+    Point<double> copyPoints[n + 1];
     for (int i = 0; i <= n; i++)
     {
         copyPoints[i] = points[i];
@@ -84,15 +80,15 @@ DoublePoint BezierInterpolation(DoublePoint points[], int n)
     return copyPoints[0];
 }
 
-void DrawBezier(HDC hdc, Point points[], int n, COLORREF color)
+void DrawBezier(HDC hdc, Point<int> points[], int n, COLORREF color)
 {
     const double step = 0.0001;
-    DoublePoint myPoints[n + 1];
+    Point<double> myPoints[n + 1];
     for (int i = 0; i <= n; i++)
     {
         myPoints[i] = {(double)points[i].x, (double)points[i].y};
     }
-    DoublePoint p = BezierInterpolation(myPoints, n);
+    Point<double> p = BezierInterpolation(myPoints, n);
     for (int i = -2; i <= 2; i++)
     {
         for (int j = -2; j <= 2; j++)
@@ -102,7 +98,7 @@ void DrawBezier(HDC hdc, Point points[], int n, COLORREF color)
     }
 }
 
-void BezierIterative(HDC hdc, Point points[], int n, COLORREF color)
+void BezierIterative(HDC hdc, Point<int> points[], int n, COLORREF color)
 {
     const double step = 0.0001;
     for (double t = 0; t <= 1; t += step)
@@ -137,29 +133,29 @@ void BezierIterative(HDC hdc, Point points[], int n, COLORREF color)
     }
 }
 
-pair<double, double> calcBezier(double t, Point points[], int i, int j)
+Point<double> calcBezier(double t, Point<int> points[], int i, int j)
 {
     if (i == j)
-        return {points[i].x, points[i].y};
+        return {(double)points[i].x, (double)points[i].y};
 
-    pair<double, double> p1 = calcBezier(t, points, i, j - 1);
-    pair<double, double> p2 = calcBezier(t, points, i + 1, j);
-    return {(1 - t) * p1.first + t * p2.first, (1 - t) * p1.second + t * p2.second};
+    Point<double> p1 = calcBezier(t, points, i, j - 1);
+    Point<double> p2 = calcBezier(t, points, i + 1, j);
+    return {(1 - t) * p1.x + t * p2.x, (1 - t) * p1.y + t * p2.y};
 }
 
-void BezierRecursive(HDC hdc, Point points[], int n, COLORREF color)
+void BezierRecursive(HDC hdc, Point<int> points[], int n, COLORREF color)
 {
     const double step = 0.0001;
     for (double t = 0; t <= 1; t += step)
     {
-        pair<double, double> p = calcBezier(t, points, 0, n);
-        SetPixel(hdc, Round(p.first), Round(p.second), color);
+        Point<double> p = calcBezier(t, points, 0, n);
+        SetPixel(hdc, Round(p.x), Round(p.y), color);
     }
 }
 
 LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
-    static Point points[50];
+    static Point<int> points[50];
     static int counter = 0;
     HDC hdc;
     switch (m)
@@ -181,7 +177,7 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         hdc = GetDC(hwnd);
         BezierIterative(hdc, points, counter - 1, RGB(255, 0, 0));
         // BezierRecursive(hdc, points, counter - 1, RGB(0, 0, 255));
-        //DrawBezier(hdc, points, counter - 1, RGB(0, 255, 0));
+        // DrawBezier(hdc, points, counter - 1, RGB(0, 255, 0));
         ReleaseDC(hwnd, hdc);
         counter = 0;
         break;
