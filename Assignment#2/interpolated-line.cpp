@@ -14,12 +14,12 @@ int Round(double x)
 
 void InterpolatedColoredLine(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c1, COLORREF c2)
 {
-    BYTE red1 = GetRValue(c1);
-    BYTE green1 = GetGValue(c1);
-    BYTE blue1 = GetBValue(c1);
-    BYTE alphaRed = GetRValue(c2) - red1;
-    BYTE alphaGreen = GetGValue(c2) - green1;
-    BYTE alphaBlue = GetBValue(c2) - blue1;
+    int red1 = GetRValue(c1);
+    int green1 = GetGValue(c1);
+    int blue1 = GetBValue(c1);
+    int alphaRed = GetRValue(c2) - red1;
+    int alphaGreen = GetGValue(c2) - green1;
+    int alphaBlue = GetBValue(c2) - blue1;
     int alphaX = x2 - x1;
     int alphaY = y2 - y1;
     double step = 1.0 / std::max(abs(alphaX), abs(alphaY));
