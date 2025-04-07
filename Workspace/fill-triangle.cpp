@@ -3,6 +3,7 @@
 
 #include <Windows.h>
 #include <stack>
+#include <cmath>
 
 using namespace std;
 
@@ -16,33 +17,17 @@ int Round(double x)
     return (int)(x + 0.5);
 }
 
-void FillArea(HDC hdc, int x, int y, COLORREF fillColor)
+int sideLength(Point p1, Point p2)
 {
-    COLORREF replace = GetPixel(hdc, x, y);
-
-    stack<pair<int, int>> s;
-    s.push({x, y});
-
-    while (!s.empty())
-    {
-        auto [cx, cy] = s.top();
-        s.pop();
-
-        if (GetPixel(hdc, cx, cy) != replace)
-            continue;
-
-        SetPixel(hdc, cx, cy, fillColor);
-
-        s.push({cx + 1, cy});
-        s.push({cx - 1, cy});
-        s.push({cx, cy + 1});
-        s.push({cx, cy - 1});
-    }
+    return (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
 }
 
 void FillTriangle(HDC hdc, Point points[3], COLORREF fillColor)
 {
-    const double step = 0.01;
+    int a = sideLength(points[0], points[1]);
+    int b = sideLength(points[1], points[2]);
+    int c = sideLength(points[2], points[0]);
+    const double step = 1.0 / sqrt(max(a, max(b, c)));
     for (double t1 = 0.0; t1 <= 1.0; t1 += step)
     {
         for (double t2 = 0.0; t2 <= 1.0 - t1; t2 += step)
@@ -52,40 +37,6 @@ void FillTriangle(HDC hdc, Point points[3], COLORREF fillColor)
             SetPixel(hdc, Round(x), Round(y), fillColor);
         }
     }
-}
-
-void DrawLine(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color)
-{
-    int dx = abs(x2 - x1), dy = abs(y2 - y1);
-    int sx = (x1 < x2) ? 1 : -1;
-    int sy = (y1 < y2) ? 1 : -1;
-    int err = dx - dy;
-
-    while (true)
-    {
-        SetPixel(hdc, x1, y1, color);
-        if (x1 == x2 && y1 == y2)
-            break;
-        int e2 = 2 * err;
-        if (e2 > -dy)
-        {
-            err -= dy;
-            x1 += sx;
-        }
-        if (e2 < dx)
-        {
-            err += dx;
-            y1 += sy;
-        }
-    }
-}
-
-void DrawTriangle(HDC hdc, Point points[3], COLORREF color)
-{
-    DrawLine(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color);
-    DrawLine(hdc, points[1].x, points[1].y, points[2].x, points[2].y, color);
-    DrawLine(hdc, points[2].x, points[2].y, points[0].x, points[0].y, color);
-    FillTriangle(hdc, points, RGB(255, 0, 0));
 }
 
 LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
@@ -100,7 +51,7 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         if (counter == 3)
         {
             hdc = GetDC(hwnd);
-            DrawTriangle(hdc, points, RGB(0, 0, 255));
+            FillTriangle(hdc, points, RGB(255, 0, 0));
             counter = 0;
             ReleaseDC(hwnd, hdc);
         }
