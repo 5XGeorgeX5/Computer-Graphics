@@ -21,72 +21,6 @@ int Round(double x)
     return (int)(x + 0.5);
 }
 
-void DrawLine(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color)
-{
-    int dx = abs(x2 - x1), dy = abs(y2 - y1);
-    int sx = (x1 < x2) ? 1 : -1;
-    int sy = (y1 < y2) ? 1 : -1;
-    int err = dx - dy;
-
-    while (true)
-    {
-        SetPixel(hdc, x1, y1, color);
-        if (x1 == x2 && y1 == y2)
-            break;
-        int e2 = 2 * err;
-        if (e2 > -dy)
-        {
-            err -= dy;
-            x1 += sx;
-        }
-        if (e2 < dx)
-        {
-            err += dx;
-            y1 += sy;
-        }
-    }
-}
-
-Point<double> LinearInterpolation(Point<double> p1, Point<double> p2)
-{
-    return {p1.x + (p2.x - p1.x) * 0.5, p1.y + (p2.y - p1.y) * 0.5};
-}
-
-Point<double> BezierInterpolation(Point<double> points[], int n)
-{
-    Point<double> copyPoints[n + 1];
-    for (int i = 0; i <= n; i++)
-    {
-        copyPoints[i] = points[i];
-    }
-    for (int r = 1; r <= n; r++)
-    {
-        for (int i = 0; i <= n - r; i++)
-        {
-            copyPoints[i] = LinearInterpolation(copyPoints[i], copyPoints[i + 1]);
-        }
-    }
-    return copyPoints[0];
-}
-
-void DrawBezier(HDC hdc, Point<int> points[], int n, COLORREF color)
-{
-    const double step = 0.0001;
-    Point<double> myPoints[n + 1];
-    for (int i = 0; i <= n; i++)
-    {
-        myPoints[i] = {(double)points[i].x, (double)points[i].y};
-    }
-    Point<double> p = BezierInterpolation(myPoints, n);
-    for (int i = -2; i <= 2; i++)
-    {
-        for (int j = -2; j <= 2; j++)
-        {
-            SetPixel(hdc, Round(p.x) + i, Round(p.y) + j, color);
-        }
-    }
-}
-
 void BezierIterative(HDC hdc, Point<int> points[], int n, COLORREF color)
 {
     const double step = 0.0001;
@@ -152,12 +86,6 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     case WM_LBUTTONDOWN:
     {
         points[counter] = {LOWORD(lp), HIWORD(lp)};
-        if (counter != 0)
-        {
-            hdc = GetDC(hwnd);
-            DrawLine(hdc, points[counter - 1].x, points[counter - 1].y, points[counter].x, points[counter].y, RGB(0, 0, 0));
-            ReleaseDC(hwnd, hdc);
-        }
         ++counter;
         break;
     }
@@ -166,7 +94,6 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         hdc = GetDC(hwnd);
         BezierIterative(hdc, points, counter - 1, RGB(255, 0, 0));
         // BezierRecursive(hdc, points, counter - 1, RGB(0, 0, 255));
-        // DrawBezier(hdc, points, counter - 1, RGB(0, 255, 0));
         ReleaseDC(hwnd, hdc);
         counter = 0;
         break;
