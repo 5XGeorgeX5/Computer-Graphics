@@ -6,6 +6,8 @@
 #define _UNICODE
 #include <Windows.h>
 #include <cmath>
+#include <iostream>
+using namespace std;
 
 int Round(double x)
 {
@@ -31,6 +33,7 @@ void DrawCircleBres(HDC hdc, int xc, int yc, int R, COLORREF c)
     int d = 1 - R;
     int d1 = 3, d2 = 5 - 2 * R;
     DrawCirclePoints(hdc, xc, yc, x, y, c);
+    cout << "X: " << x << ", Y: " << y << ", d: " << d << ", d1: " << d1 << ", d2: " << d2 << endl;
     while (x < y)
     {
         if (d < 0)
@@ -46,6 +49,7 @@ void DrawCircleBres(HDC hdc, int xc, int yc, int R, COLORREF c)
         }
         d1 += 2;
         x++;
+        cout << "X: " << x << ", Y: " << y << ", d: " << d << ", d1: " << d1 << ", d2: " << d2 << endl;
         DrawCirclePoints(hdc, xc, yc, x, y, c);
     }
 }
@@ -67,7 +71,8 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         int R = Round(sqrt(dx * dx + dy * dy)); // radius
 
         hdc = GetDC(hwnd);
-        DrawCircleBres(hdc, xc, yc, R, RGB(0, 0, 0));
+        // DrawCircleBres(hdc, xc, yc, R, RGB(0, 0, 0));
+        DrawCircleBres(hdc, 10, 10, 5, RGB(0, 0, 0));
         ReleaseDC(hwnd, hdc);
         break;
     }
@@ -85,6 +90,9 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 
 int APIENTRY WinMain(HINSTANCE hi, HINSTANCE pi, LPSTR cmd, int nsh)
 {
+    AllocConsole(); // Creates a new console window
+    FILE *f;
+    freopen_s(&f, "CONOUT$", "w", stdout);
     WNDCLASS wc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;

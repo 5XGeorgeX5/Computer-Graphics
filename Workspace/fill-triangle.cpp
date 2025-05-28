@@ -9,7 +9,16 @@ using namespace std;
 
 struct Point
 {
-    int x, y;
+    double x, y;
+    Point operator+(const Point &p) const { return {x + p.x, y + p.y}; }
+    Point operator*(double scalar) const
+    {
+        return {x * scalar, y * scalar};
+    }
+    friend Point operator*(double scalar, const Point &p)
+    {
+        return p * scalar;
+    }
 };
 
 int Round(double x)
@@ -32,9 +41,8 @@ void FillTriangle(HDC hdc, Point points[3], COLORREF fillColor)
     {
         for (double t2 = 0.0; t2 <= 1.0 - t1; t2 += step)
         {
-            double x = t1 * points[0].x + t2 * points[1].x + (1 - t1 - t2) * points[2].x;
-            double y = t1 * points[0].y + t2 * points[1].y + (1 - t1 - t2) * points[2].y;
-            SetPixel(hdc, Round(x), Round(y), fillColor);
+            Point result = t1 * points[0] + t2 * points[1] + (1 - t1 - t2) * points[2];
+            SetPixel(hdc, Round(result.x), Round(result.y), fillColor);
         }
     }
 }
@@ -47,7 +55,7 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     switch (m)
     {
     case WM_LBUTTONDOWN:
-        points[counter++] = {LOWORD(lp), HIWORD(lp)};
+        points[counter++] = {(double)LOWORD(lp), (double)HIWORD(lp)};
         if (counter == 3)
         {
             hdc = GetDC(hwnd);

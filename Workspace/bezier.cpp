@@ -13,6 +13,19 @@ using namespace std;
 struct Point
 {
     double x, y;
+    Point operator+(const Point &p) const { return {x + p.x, y + p.y}; }
+    Point operator*(double scalar) const
+    {
+        return {x * scalar, y * scalar};
+    }
+    friend Point operator*(double scalar, const Point &p)
+    {
+        return p * scalar;
+    }
+    Point operator/(double scalar) const
+    {
+        return {x / scalar, y / scalar};
+    }
 };
 
 int Round(double x)
@@ -45,11 +58,9 @@ void BezierIterative(HDC hdc, Point points[], int n, COLORREF color)
 Point calcBezier(double t, Point points[], int i, int j)
 {
     if (i == j)
-        return {points[i].x, points[i].y};
+        return points[i];
 
-    Point p1 = calcBezier(t, points, i, j - 1);
-    Point p2 = calcBezier(t, points, i + 1, j);
-    return {(1 - t) * p1.x + t * p2.x, (1 - t) * p1.y + t * p2.y};
+    return {(1 - t) * calcBezier(t, points, i, j - 1) + t * calcBezier(t, points, i + 1, j)};
 }
 
 void BezierRecursive(HDC hdc, Point points[], int n, COLORREF color)
@@ -62,25 +73,31 @@ void BezierRecursive(HDC hdc, Point points[], int n, COLORREF color)
     }
 }
 
-void BezierRecursive2(HDC hdc, Point points[4], COLORREF color)
+void BezierRecursive2(HDC hdc, Point p[4], COLORREF color)
 {
-    if (abs(points[0].x - points[3].x) < 1 && abs(points[0].y - points[3].y) < 1)
-    {
+    if (abs(p[0].x - p[3].x) < 1 && abs(p[0].y - p[3].y) < 1)
         return;
-    }
-    Point q[3];
-    q[0] = {(points[0].x + points[1].x) / 2, (points[0].y + points[1].y) / 2};
-    q[1] = {(points[1].x + points[2].x) / 2, (points[1].y + points[2].y) / 2};
-    q[2] = {(points[2].x + points[3].x) / 2, (points[2].y + points[3].y) / 2};
-    Point r[2];
-    r[0] = {(q[0].x + q[1].x) / 2, (q[0].y + q[1].y) / 2};
-    r[1] = {(q[1].x + q[2].x) / 2, (q[1].y + q[2].y) / 2};
-    Point p = {(r[0].x + r[1].x) / 2, (r[0].y + r[1].y) / 2};
-    SetPixel(hdc, Round(p.x), Round(p.y), color);
-    Point x1[4] = {points[0], q[0], r[0], p};
-    Point x2[4] = {p, r[1], q[2], points[3]};
-    BezierRecursive2(hdc, x1, color);
-    BezierRecursive2(hdc, x2, color);
+
+    // Compute midpoints of segments
+    Point q0 = (p[0] + p[1]) / 2.0;
+    Point q1 = (p[1] + p[2]) / 2.0;
+    Point q2 = (p[2] + p[3]) / 2.0;
+
+    // Midpoints of q's
+    Point r0 = (q0 + q1) / 2.0;
+    Point r1 = (q1 + q2) / 2.0;
+
+    // Final midpoint
+    Point m = (r0 + r1) / 2.0;
+
+    SetPixel(hdc, Round(m.x), Round(m.y), color);
+
+    // Recursive subdivision
+    Point left[4] = {p[0], q0, r0, m};
+    Point right[4] = {m, r1, q2, p[3]};
+
+    BezierRecursive2(hdc, left, color);
+    BezierRecursive2(hdc, right, color);
 }
 
 LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
@@ -100,7 +117,7 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     {
         hdc = GetDC(hwnd);
         BezierIterative(hdc, points, counter - 1, RGB(255, 0, 0));
-        BezierRecursive(hdc, points, counter - 1, RGB(0, 0, 255));
+        BezierRecursive2(hdc, points, RGB(0, 0, 255));
         ReleaseDC(hwnd, hdc);
         counter = 0;
         break;
