@@ -6,8 +6,6 @@
 #include <map>
 #include <cmath>
 #include <algorithm>
-#include <iostream>
-#include <fstream>
 
 using namespace std;
 
@@ -18,7 +16,7 @@ int Round(double x)
 
 struct Point
 {
-    int x, y;
+    double x, y;
 };
 
 struct Node
@@ -41,7 +39,7 @@ void edgeToTable(map<int, vector<Node>> &edgeTable, Point v1, Point v2)
 
     if (edgeTable.find(v1.y) == edgeTable.end())
         edgeTable[v1.y] = vector<Node>();
-    edgeTable[v1.y].push_back({(double)v1.x, (double)(v2.x - v1.x) / (v2.y - v1.y), v2.y});
+    edgeTable[v1.y].push_back({v1.x, (v2.x - v1.x) / (v2.y - v1.y), Round(v2.y)});
 }
 
 void GeneralFill(HDC hdc, vector<Point> points, COLORREF fillColor)
@@ -53,28 +51,14 @@ void GeneralFill(HDC hdc, vector<Point> points, COLORREF fillColor)
         edgeToTable(edgeTable, v1, v2);
         v1 = v2;
     }
-    cout << "Edge Table:\n";
-    for (const auto &entry : edgeTable)
-    {
-        cout << "y = " << entry.first << ": ";
-        for (const Node &node : entry.second)
-        {
-            cout << "(x = " << node.x << ", mi = " << node.mi << ") ";
-        }
-        cout << endl;
-    }
+
     int y = edgeTable.begin()->first;
     vector<Node> active = edgeTable.begin()->second;
     while (!active.empty())
     {
         // Sort active edges by x-coordinate
         sort(active.begin(), active.end());
-        cout << "Active edges at y = " << y << ":\n|| ";
-        for (const Node &node : active)
-        {
-            cout << "x = " << node.x << ", mi = " << node.mi << " || ";
-        }
-        cout << endl;
+
         // Fill between pairs of x-coordinates
         for (size_t i = 0; i < active.size() - 1; i += 2)
         {
@@ -110,7 +94,7 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     switch (m)
     {
     case WM_LBUTTONDOWN:
-        points.push_back({LOWORD(lp), HIWORD(lp)});
+        points.push_back({(double)LOWORD(lp), (double)HIWORD(lp)});
         hdc = GetDC(hwnd);
         SetPixel(hdc, points.back().x, points.back().y, RGB(0, 0, 0));
         ReleaseDC(hwnd, hdc);
@@ -137,9 +121,6 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 
 int APIENTRY WinMain(HINSTANCE hi, HINSTANCE pi, LPSTR cmd, int nsh)
 {
-    AllocConsole(); // Creates a new console window
-    FILE *f;
-    freopen_s(&f, "CONOUT$", "w", stdout);
     WNDCLASS wc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
