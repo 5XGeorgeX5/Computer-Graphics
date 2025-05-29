@@ -85,14 +85,17 @@ void GeneralFill(HDC hdc, vector<Point> points, COLORREF fillColor)
                 SetPixel(hdc, x, y, fillColor);
             }
         }
+        // increment y and update active edges
         ++y;
         active.erase(remove_if(active.begin(), active.end(), [y](const Node &node)
                                { return node.y == y; }),
                      active.end());
+        // Update x-coordinates of active edges
         for (size_t i = 0; i < active.size(); ++i)
         {
             active[i].x += active[i].mi;
         }
+        // Add new edges from edge table
         if (edgeTable.find(y) != edgeTable.end())
         {
             active.insert(active.end(), edgeTable[y].begin(), edgeTable[y].end());
