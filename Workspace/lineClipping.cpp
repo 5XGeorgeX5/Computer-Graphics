@@ -62,7 +62,7 @@ void DrawLineDDA(HDC hdc, Point p1, Point p2, COLORREF color)
     }
 }
 
-void lineClipping(HDC hdc, Point p1, Point p2, int left, int top, int right, int bottom)
+void LineClipping(HDC hdc, Point p1, Point p2, int left, int top, int right, int bottom)
 {
     OutCode code1, code2;
     code1.all = 0;
@@ -173,7 +173,7 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             hdc = GetDC(hwnd);
             p2 = {LOWORD(lp), HIWORD(lp)};
             // DrawLineDDA(hdc, p1, p2, RGB(255, 0, 0));
-            lineClipping(hdc, p1, p2, left, top, right, bottom);
+            LineClipping(hdc, p1, p2, left, top, right, bottom);
             draw = false;
             ReleaseDC(hwnd, hdc);
         }
